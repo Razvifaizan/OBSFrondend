@@ -1,0 +1,139 @@
+:root { 
+ --background: #1b1f3b;
+  --gradient: repeating-linear-gradient(155deg, #f20094, #fc9305, #3bcfd4);
+  --pink: #f20094;
+  --orange: #fc9305;
+  --blue: #3bcfd4;
+}
+body {
+  background: var(--background);
+  display: flex;
+  flex-direction: column;
+  text-align: center;
+  
+}
+menu {
+  background: var(--gradient);
+  background-clip: text;
+  
+  -webkit-background-clip: text;
+  -webkit-text-color-fill: transparent;
+}
+.overlay {
+  height: 100%;
+  width: 0;
+  position: fixed;
+  top: 0;
+  left: 0;
+  background-color: var(--background);
+  overflow-x: hidden;
+  transition: 0.5s;
+  z-index: 1000;
+}
+.overlay-content {
+  position: relative;
+  top: 25%;
+  text-align: center;
+  
+}
+.overlay a {
+  display: block;
+  font-size: 2rem;
+  color: var(--pink);
+  padding: 1rem;
+  transition: color 0.3s;
+  
+}
+.overlay a:hover {
+  color: var(--orange);
+}
+.closebtn {
+  position: absolute;
+  top: 20px;
+  right: 45px;
+  font-size: 3rem;
+  color: var(--pink);
+}
+.closebtn:hover {
+  color: var(--orange);
+    font-size: 3rem;
+  transition: color 0.2s;
+}
+.hero-title {
+  padding: 2%;
+}
+
+
+.hero-title span {
+  font-size: 7rem;
+  background: var(--gradient);
+  font-weight: bold;
+  background-size: 1px;
+  background-position: 30%;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  text-shadow: 4px 4px 0 var(--background);
+  position: relative;
+  
+  font-family: georgia;
+  
+  
+}
+.hero-title-2 span {
+  
+  font-size: 3.5rem;
+  font-weight: bold;
+  font-family: georgia;
+  color: var(--orange);
+  
+  text-shadow: 2px 2px 0 var(--pink);
+
+  letter-spacing: 16px;
+  position: relative;
+  
+  
+}
+.slogan p {
+  padding: 2%;
+  color: var(--pink);
+  font-size: 2rem;
+}
+a, i {
+  background: var(--gradient);
+  max-width: 100%;
+  width: 30px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin: 2%;
+  
+}
+.btns {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+.btn {
+  padding: 1%;
+  max-width: 100%;
+  width: 15rem;
+  height: 4.9rem;
+  border-radius: 25px;
+  font-size: 1.2rem;
+  color: var(--background);
+  border: var(--pink);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.login_card{
+    width: 60%;
+    justify-content: center;
+    text-align: center;
+    border: 2px solid var(--pink);
+    margin: auto;
+    padding: 20px;
+    border-radius: 10px;
+    margin: 40px auto;
+}
