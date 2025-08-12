@@ -2,7 +2,7 @@ import React, { useEffect, useRef, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import socket from "./socket";
 
-const STUN = { iceServers: [{ urls: "stun:stun.l.google.com:19302" }] };
+const PC_CONFIG = { iceServers: [{ urls: "stun:stun.l.google.com:19302" }] }; // Free STUN
 
 export default function VideoRoom({ username }) {
   const { roomId } = useParams();
@@ -10,9 +10,9 @@ export default function VideoRoom({ username }) {
 
   const localVideoRef = useRef();
   const localStreamRef = useRef(null);
-  const pcsRef = useRef({}); // peer connections: socketId -> RTCPeerConnection
+  const pcsRef = useRef({});
 
-  const [remoteStreams, setRemoteStreams] = useState([]); // [{id, stream}]
+  const [remoteStreams, setRemoteStreams] = useState([]); // {id, stream}
   const [micOn, setMicOn] = useState(true);
   const [camOn, setCamOn] = useState(true);
   const [mutedRemoteIds, setMutedRemoteIds] = useState(new Set());
@@ -24,6 +24,7 @@ export default function VideoRoom({ username }) {
       return;
     }
 
+    // Register username with socket
     socket.emit("register", username);
 
     socket.on("all-users", (otherSocketIds) => {
@@ -51,8 +52,8 @@ export default function VideoRoom({ username }) {
 
     socket.on("signal", async ({ from, data }) => {
       if (!from || !data) return;
-
       let pc = pcsRef.current[from];
+
       try {
         if (data.type === "offer") {
           if (!pc) pc = createPeerConnection(from, false);
@@ -60,13 +61,15 @@ export default function VideoRoom({ username }) {
           const answer = await pc.createAnswer();
           await pc.setLocalDescription(answer);
           socket.emit("signal", { toSocketId: from, data: pc.localDescription });
+
         } else if (data.type === "answer" && pc) {
           await pc.setRemoteDescription(data);
+
         } else if (data.candidate && pc) {
           await pc.addIceCandidate(new RTCIceCandidate(data.candidate));
         }
       } catch (error) {
-        console.error("Error handling signal:", error);
+        console.error("Signal error:", error);
       }
     });
 
@@ -74,6 +77,7 @@ export default function VideoRoom({ username }) {
       setIncomingInvite({ roomId: inviteRoomId, from });
     });
 
+    // Get camera/mic stream
     (async () => {
       try {
         const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
@@ -95,7 +99,6 @@ export default function VideoRoom({ username }) {
 
       Object.values(pcsRef.current).forEach((pc) => pc.close());
       localStreamRef.current?.getTracks().forEach((track) => track.stop());
-
       pcsRef.current = {};
     };
   }, [roomId, username, navigate]);
@@ -103,7 +106,7 @@ export default function VideoRoom({ username }) {
   function createPeerConnection(peerSocketId, isInitiator) {
     if (pcsRef.current[peerSocketId]) return pcsRef.current[peerSocketId];
 
-    const pc = new RTCPeerConnection(STUN);
+    const pc = new RTCPeerConnection(PC_CONFIG);
 
     if (localStreamRef.current) {
       localStreamRef.current.getTracks().forEach((track) => {
@@ -113,7 +116,10 @@ export default function VideoRoom({ username }) {
 
     pc.onicecandidate = (event) => {
       if (event.candidate) {
-        socket.emit("signal", { toSocketId: peerSocketId, data: { candidate: event.candidate } });
+        socket.emit("signal", {
+          toSocketId: peerSocketId,
+          data: { candidate: event.candidate }
+        });
       }
     };
 
@@ -137,7 +143,7 @@ export default function VideoRoom({ username }) {
           await pc.setLocalDescription(offer);
           socket.emit("signal", { toSocketId: peerSocketId, data: pc.localDescription });
         } catch (error) {
-          console.error("Error creating offer:", error);
+          console.error("Offer creation error:", error);
         }
       })();
     }
@@ -222,19 +228,10 @@ export default function VideoRoom({ username }) {
 
   return (
     <div className="center">
-      {/* Modal overlay */}
       {incomingInvite && (
         <>
+          <div style={{ position: "fixed", inset: 0, backgroundColor: "rgba(0,0,0,0.5)", zIndex: 999 }} />
           <div
-            style={{
-              position: "fixed",
-              inset: 0,
-              backgroundColor: "rgba(0,0,0,0.5)",
-              zIndex: 999,
-            }}
-          />
-          <div
-            className="invite-modal"
             style={{
               position: "fixed",
               top: "20%",
@@ -253,26 +250,18 @@ export default function VideoRoom({ username }) {
               <strong>{incomingInvite.from}</strong> invited you to join room{" "}
               <strong>{incomingInvite.roomId}</strong>
             </p>
-            <button onClick={handleAcceptInvite} style={{ marginRight: 10 }}>
-              Accept
-            </button>
+            <button onClick={handleAcceptInvite} style={{ marginRight: 10 }}>Accept</button>
             <button onClick={handleDeclineInvite}>Decline</button>
           </div>
         </>
       )}
 
-      {/* Video Cards */}
       <div className="card">
         <h3>Room: {roomId}</h3>
         <div style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
           <div>
             <div className="label">You</div>
-            <video
-              ref={localVideoRef}
-              autoPlay
-              muted
-              style={{ width: 240, borderRadius: 8, background: "#000" }}
-            />
+            <video ref={localVideoRef} autoPlay muted style={{ width: 240, borderRadius: 8, background: "#000" }} />
           </div>
 
           <div style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
@@ -284,9 +273,7 @@ export default function VideoRoom({ username }) {
                   playsInline
                   muted={mutedRemoteIds.has(id)}
                   style={{ width: 240, borderRadius: 8, background: "#000" }}
-                  ref={(el) => {
-                    if (el && !el.srcObject) el.srcObject = stream;
-                  }}
+                  ref={(el) => { if (el && !el.srcObject) el.srcObject = stream; }}
                 />
                 <button
                   style={{
@@ -302,7 +289,6 @@ export default function VideoRoom({ username }) {
                     cursor: "pointer",
                   }}
                   onClick={() => toggleRemoteMute(id)}
-                  aria-label={mutedRemoteIds.has(id) ? "Unmute remote video" : "Mute remote video"}
                 >
                   {mutedRemoteIds.has(id) ? "Unmute" : "Mute"}
                 </button>
