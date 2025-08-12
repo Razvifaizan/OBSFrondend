@@ -2,7 +2,18 @@ import React, { useEffect, useRef, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import socket from "./socket";
 
-const PC_CONFIG = { iceServers: [{ urls: "stun:stun.l.google.com:19302" }] }; // Free STUN
+// const PC_CONFIG = { iceServers: [{ urls: "stun:stun.l.google.com:19302" }] };
+const PC_CONFIG = {
+  iceServers: [
+    { urls: "stun:stun.l.google.com:19302" }, // Free STUN
+    {
+      urls: "turn:openrelay.metered.ca:80",
+      username: "openrelayproject",
+      credential: "openrelayproject"
+    }
+  ]
+};
+ // Free STUN
 
 export default function VideoRoom({ username }) {
   const { roomId } = useParams();
